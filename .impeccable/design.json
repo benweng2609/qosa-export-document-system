@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T01:02:18+08:00",
+  "title": "Design System: 外贸单证系统",
+  "extensions": {
+    "colorMeta": {
+      "action-blue": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "canonical": "#1D4ED8",
+        "tonalRamp": ["#172554", "#1E3A8A", "#1E40AF", "#1D4ED8", "#2563EB", "#60A5FA", "#BFDBFE", "#EFF6FF"]
+      },
+      "action-blue-hover": {
+        "role": "primary",
+        "displayName": "Action Blue Hover",
+        "canonical": "#1E40AF",
+        "tonalRamp": ["#172554", "#1E3A8A", "#1E40AF", "#1D4ED8", "#2563EB", "#60A5FA", "#BFDBFE", "#EFF6FF"]
+      },
+      "ink-slate": {
+        "role": "neutral",
+        "displayName": "Ink Slate",
+        "canonical": "#172033",
+        "tonalRamp": ["#0F172A", "#172033", "#1E293B", "#334155", "#475569", "#64748B", "#CBD5E1", "#F1F5F9"]
+      },
+      "muted-slate": {
+        "role": "neutral",
+        "displayName": "Muted Slate",
+        "canonical": "#64748B",
+        "tonalRamp": ["#0F172A", "#1E293B", "#334155", "#475569", "#64748B", "#94A3B8", "#CBD5E1", "#F1F5F9"]
+      },
+      "app-grey": {
+        "role": "neutral",
+        "displayName": "App Grey",
+        "canonical": "#F5F7FA",
+        "tonalRamp": ["#172033", "#334155", "#64748B", "#94A3B8", "#CBD5E1", "#E2E8F0", "#F5F7FA", "#FFFFFF"]
+      },
+      "panel-white": {
+        "role": "neutral",
+        "displayName": "Panel White",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#172033", "#334155", "#64748B", "#94A3B8", "#CBD5E1", "#E2E8F0", "#F8FAFC", "#FFFFFF"]
+      },
+      "subtle-grey": {
+        "role": "neutral",
+        "displayName": "Subtle Grey",
+        "canonical": "#F8FAFC",
+        "tonalRamp": ["#172033", "#334155", "#64748B", "#94A3B8", "#CBD5E1", "#E2E8F0", "#F8FAFC", "#FFFFFF"]
+      },
+      "border-grey": {
+        "role": "neutral",
+        "displayName": "Border Grey",
+        "canonical": "#E2E8F0",
+        "tonalRamp": ["#172033", "#334155", "#64748B", "#94A3B8", "#CBD5E1", "#E2E8F0", "#F1F5F9", "#F8FAFC"]
+      }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "页面标题与主要任务定位。" },
+      "title": { "displayName": "Title", "purpose": "业务区块与重要面板标题。" },
+      "body": { "displayName": "Body", "purpose": "高频表单、表格与操作说明。" },
+      "label": { "displayName": "Label", "purpose": "字段标签、导航和紧凑状态文字。" }
+    },
+    "shadows": [
+      { "name": "paper", "value": "0 3px 16px #0F172A1F", "purpose": "A4 纸张与预览舞台分离。" },
+      { "name": "dialog", "value": "0 18px 50px #0F172A26", "purpose": "模态确认与受保护任务。" },
+      { "name": "drawer", "value": "-18px 0 50px #0F172A1F", "purpose": "右侧资料编辑抽屉。" },
+      { "name": "mobile-action", "value": "0 5px 18px #1E40AF33", "purpose": "手机固定下载按钮。" }
+    ],
+    "motion": [
+      { "name": "state-standard", "value": "160ms ease-out", "purpose": "按钮、导航、边框和选择状态。" },
+      { "name": "press", "value": "120ms ease-out", "purpose": "按钮 1px 按下反馈。" },
+      { "name": "shell", "value": "180ms ease-out", "purpose": "侧栏折叠与手机抽屉。" }
+    ],
+    "breakpoints": [
+      { "name": "editor-rail", "value": "1360px" },
+      { "name": "compact", "value": "1120px" },
+      { "name": "tablet", "value": "900px" },
+      { "name": "mobile", "value": "767px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "编辑器中的唯一主行动与流程提交按钮。",
+      "html": "<button class=\"ds-btn-primary\">下载 PDF</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 14px;border:1px solid #1D4ED8;border-radius:6px;background:#1D4ED8;color:#fff;font:550 13px/1.55 'Noto Sans SC',sans-serif;transition:background-color 160ms ease-out,transform 120ms ease-out}.ds-btn-primary:hover{background:#1E40AF;border-color:#1E40AF}.ds-btn-primary:active{transform:translateY(1px)}.ds-btn-primary:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "返回、编辑和辅助任务使用的安静按钮。",
+      "html": "<button class=\"ds-btn-secondary\">保存草稿</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 14px;border:1px solid #E2E8F0;border-radius:6px;background:#fff;color:#172033;font:550 13px/1.55 'Noto Sans SC',sans-serif;transition:background-color 160ms ease-out,border-color 160ms ease-out}.ds-btn-secondary:hover{background:#F8FAFC;border-color:#CBD5E1}.ds-btn-secondary:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "高密度业务表单的标准文本输入。",
+      "html": "<label class=\"ds-field\">单证编号<input class=\"ds-input\" value=\"PI-2026-0018\" /></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:7px;color:#334155;font:550 13px/1.55 'Noto Sans SC',sans-serif}.ds-input{width:100%;min-height:38px;padding:8px 10px;border:1px solid #CBD5E1;border-radius:6px;background:#fff;color:#172033;font:400 14px/1.55 'Noto Sans SC',sans-serif;transition:border-color 150ms ease-out,box-shadow 150ms ease-out}.ds-input:focus{outline:none;border-color:#1D4ED8;box-shadow:0 0 0 3px #1D4ED814}.ds-input:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "当前工作区使用浅蓝底与品牌蓝文字。",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-active\">单证管理</button><button class=\"ds-nav-item\">产品库</button></nav>",
+      "css": ".ds-nav{display:flex;flex-direction:column;gap:4px;padding:8px;background:#fff}.ds-nav button{min-height:40px;padding:8px 12px;border:0;border-radius:6px;text-align:left;font:550 13px/1.55 'Noto Sans SC',sans-serif;transition:background-color 160ms ease-out,color 160ms ease-out}.ds-nav-active{background:#EFF6FF;color:#1D4ED8}.ds-nav-item{background:transparent;color:#475569}.ds-nav-item:hover{background:#F8FAFC;color:#172033}.ds-nav button:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Business Panel",
+      "kind": "card",
+      "refersTo": "panel-default",
+      "description": "白底细边框的业务容器，不使用装饰性浮起。",
+      "html": "<section class=\"ds-panel\"><h2>基础信息</h2><p>编号、日期和状态仅属于当前单证。</p></section>",
+      "css": ".ds-panel{padding:16px;border:1px solid #E2E8F0;border-radius:10px;background:#fff;color:#172033}.ds-panel h2{margin:0 0 6px;font:650 18px/26px 'Noto Sans SC',sans-serif}.ds-panel p{margin:0;color:#64748B;font:400 12px/1.55 'Noto Sans SC',sans-serif}"
+    },
+    {
+      "name": "A4 Paper",
+      "kind": "custom",
+      "refersTo": "paper-preview",
+      "description": "以固定比例、重复表头和可选择文本承载实时单证结果。",
+      "html": "<article class=\"ds-paper\"><h1>PROFORMA INVOICE</h1><div class=\"ds-paper-rule\"></div><p>PI-2026-0018</p></article>",
+      "css": ".ds-paper{width:240px;aspect-ratio:210/297;padding:18px;border:1px solid #E2E8F0;background:#fff;color:#172033;box-shadow:0 3px 16px #0F172A1F;font:400 10px/1.5 'Noto Sans',sans-serif}.ds-paper h1{margin:0;color:#1D4ED8;text-align:right;font:700 15px/1.4 'Noto Sans',sans-serif}.ds-paper-rule{height:1px;margin:16px 0;background:#1D4ED8}.ds-paper p{font-variant-numeric:tabular-nums}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Paper-First Workbench",
+    "overview": "外贸单证系统是一张围绕纸张组织的工作台，而不是装饰性 dashboard。冷灰工作区承载高密度表单，白色面板和 A4 纸张保持清晰边界，品牌蓝只负责当前选择、关键动作和焦点。用户应先看清单证状态与下一步，再注意到视觉风格。\n\n系统以结构化录入和即时纸张反馈为核心。编辑器没有自由拖拽画布，也不把主数据、金额或版式状态藏在多层页面之后；表单、预览和导出共享同一份事实。视觉表达服务于长时间录入、复核和导出。",
+    "keyCharacteristics": [
+      "纸张是视觉中心，蓝色只标记行动与当前状态。",
+      "细边框、紧凑节奏和明确对齐优先于装饰性卡片。",
+      "桌面三栏协作，手机保留编辑、预览和固定下载闭环。",
+      "多语言、多页和空状态沿用同一套单证语法。"
+    ],
+    "rules": [
+      { "name": "The Single Action Voice Rule", "body": "同一视图只保留一个品牌蓝主行动；辅助操作使用白底、灰字或文字按钮，避免多个主按钮争夺任务优先级。", "section": "colors" },
+      { "name": "The Real Copy Rule", "body": "所有字号与换行以真实单证编号、客户名、商品说明和多语言标签验证；不允许为了维持单行而截断关键业务信息。", "section": "typography" },
+      { "name": "The Flat Work Surface Rule", "body": "工作面板保持平面；只有纸张、浮层或固定主行动可以浮起。", "section": "elevation" }
+    ],
+    "dos": [
+      "Do 让下载 PDF 成为编辑器唯一主行动，并显示真实生成进度或错误。",
+      "Do 使用 tabular-nums 对齐金额、件数、重量和编号。",
+      "Do 在手机保留编辑、预览和固定下载的完整闭环。",
+      "Do 明确标注“仅保存在当前浏览器”，将印章描述为单证图像。",
+      "Do 用真实多语言、长商品说明和两页单证检查布局。"
+    ],
+    "donts": [
+      "Don't 把工作台改成营销首页、自由拖拽画布或装饰性指标 dashboard。",
+      "Don't 用多个品牌蓝主按钮竞争同一视图的注意力。",
+      "Don't 用灰色文字放在彩色表面上充当次要文本，或牺牲对比度换取轻盈感。",
+      "Don't 伪造云端保存、PDF 成功、法律电子签名或真实企业数据。",
+      "Don't 在装箱单默认视图中显示单价和金额。"
+    ]
+  }
+}
