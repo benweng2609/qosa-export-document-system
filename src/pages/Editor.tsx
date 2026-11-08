@@ -32,16 +32,7 @@ export default function Editor({ docId, onBack }: { docId: string; onBack: () =>
   const { download, downloadingId } = usePdfDownload();
 
   useEffect(() => {
-    const doc = data.documents.find((item) => item.id === docId);
-    setDraft(doc ? structuredClone(doc) : null);
-    setHistory([]);
-    // Reload only when entering another document; autosave updates must not reset the editor.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [docId]);
-
-  useEffect(() => {
     if (!draft) return;
-    setSaveState("saving");
     const timer = window.setTimeout(() => {
       updateDocument(draft);
       setSaveState(storageError ? "error" : "saved");
@@ -86,6 +77,7 @@ export default function Editor({ docId, onBack }: { docId: string; onBack: () =>
 
   const change = (recipe: (previous: TradeDocument) => TradeDocument) => {
     setHistory((prev) => [...prev.slice(-29), structuredClone(draft)]);
+    setSaveState("saving");
     setDraft(recipe(draft));
   };
   const update = <K extends keyof TradeDocument>(key: K, value: TradeDocument[K]) => change((prev) => ({ ...prev, [key]: value }));
@@ -93,6 +85,7 @@ export default function Editor({ docId, onBack }: { docId: string; onBack: () =>
     if (!history.length) return;
     const previous = history[history.length - 1];
     setHistory(history.slice(0, -1));
+    setSaveState("saving");
     setDraft(previous);
     toast("已撤销最近编辑");
   };

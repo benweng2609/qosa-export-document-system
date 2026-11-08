@@ -55,7 +55,7 @@ export default function App() {
   if (view === "editor")
     return (
       <>
-        <Editor docId={documentId} onBack={() => navigate("documents")} />
+        <Editor key={documentId} docId={documentId} onBack={() => navigate("documents")} />
         {companyOpen && <CompanyDrawer open={companyOpen} onOpenChange={setCompanyOpen} />}
         <Toaster position="top-center" richColors closeButton />
       </>
