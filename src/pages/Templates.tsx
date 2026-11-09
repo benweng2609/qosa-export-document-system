@@ -5,6 +5,7 @@ import { Badge, Button, Drawer, Field, IconButton, Input, Modal, Select, Textare
 import { PaperPreview } from "../components/PaperPreview";
 import { DOCUMENT_TYPES, getLanguage, getTheme, LANGUAGES, THEMES } from "../data";
 import { createTemplatePreviewDocument } from "../template-preview";
+import { isSpecialDocumentType } from "../export-forms";
 import { useStore } from "../store";
 import { exportTemplatePackage, parseTemplatePackage } from "../template-io";
 import type { DocumentTemplate, DocumentType } from "../types";
@@ -46,7 +47,7 @@ export default function TemplatesPage({ onNew }: { onNew: (type: DocumentType) =
       <div className="page-heading">
         <div>
           <h1>单证模板</h1>
-          <p>为五类单证预设语言、配色、条款和显示规则，新公司也能快速上手。</p>
+          <p>为九类单证预设语言、配色、条款和显示规则，新公司也能快速上手。</p>
         </div>
         <div className="page-heading-actions">
           <Button onClick={() => inputRef.current?.click()}>
@@ -57,7 +58,7 @@ export default function TemplatesPage({ onNew }: { onNew: (type: DocumentType) =
             variant="primary"
             onClick={() => {
               exportTemplatePackage(data.templates);
-              toast.success("五类单证模板已导出");
+              toast.success(`${data.templates.length} 类单证模板已导出`);
             }}
           >
             <Download size={16} />
@@ -160,13 +161,13 @@ export default function TemplatesPage({ onNew }: { onNew: (type: DocumentType) =
                 </div>
                 <div className="template-card-badges">
                   <Badge tone="blue">{getLanguage(template.language).native}</Badge>
-                  <Badge>{template.currency}</Badge>
+                  {!isSpecialDocumentType(template.type) && <Badge>{template.currency}</Badge>}
                   <Badge>{theme.name}</Badge>
                 </div>
-                <p className="template-terms-preview">{template.paymentTerms || "未设置默认付款条款"}</p>
+                <p className="template-terms-preview">{isSpecialDocumentType(template.type) ? "默认装货港、卸货港、唛头与备注" : template.paymentTerms || "未设置默认付款条款"}</p>
                 <div className="template-display-rules">
-                  <span>{template.showPrices ? "显示价格" : "隐藏价格"}</span>
-                  <span>{template.showBankInfo ? "显示银行信息" : "隐藏银行信息"}</span>
+                  {isSpecialDocumentType(template.type) ? <span>专用资料单</span> : <span>{template.showPrices ? "显示价格" : "隐藏价格"}</span>}
+                  {!isSpecialDocumentType(template.type) && <span>{template.showBankInfo ? "显示银行信息" : "隐藏银行信息"}</span>}
                   <span>{template.showStamp ? "启用印章图像" : "不启用印章图像"}</span>
                 </div>
               </div>
@@ -319,13 +320,15 @@ function TemplateDrawerForm({ template, onOpenChange, onSave }: { template: Docu
                   ))}
                 </Select>
               </Field>
-              <Field label="默认币种">
-                <Select value={draft.currency} onChange={(event) => update("currency", event.target.value)}>
-                  {currencies.map((currency) => (
-                    <option key={currency}>{currency}</option>
-                  ))}
-                </Select>
-              </Field>
+              {!isSpecialDocumentType(draft.type) && (
+                <Field label="默认币种">
+                  <Select value={draft.currency} onChange={(event) => update("currency", event.target.value)}>
+                    {currencies.map((currency) => (
+                      <option key={currency}>{currency}</option>
+                    ))}
+                  </Select>
+                </Field>
+              )}
             </div>
             <Field label="纸张配色">
               <Select value={draft.themeId} onChange={(event) => update("themeId", event.target.value)}>
@@ -338,24 +341,26 @@ function TemplateDrawerForm({ template, onOpenChange, onSave }: { template: Docu
             </Field>
           </section>
           <section>
-            <h3>默认贸易信息</h3>
+            <h3>{isSpecialDocumentType(draft.type) ? "默认船运信息" : "默认贸易信息"}</h3>
             {["quotation", "proforma", "contract"].includes(draft.type) && (
               <Field label="付款条款">
                 <Textarea rows={3} value={draft.paymentTerms} onChange={(event) => update("paymentTerms", event.target.value)} />
               </Field>
             )}
             <div className="form-grid two">
-              <Field label="贸易术语">
-                <Input value={draft.incoterm} onChange={(event) => update("incoterm", event.target.value)} />
-              </Field>
-              <Field label="起运地">
+              {!isSpecialDocumentType(draft.type) && (
+                <Field label="贸易术语">
+                  <Input value={draft.incoterm} onChange={(event) => update("incoterm", event.target.value)} />
+                </Field>
+              )}
+              <Field label={isSpecialDocumentType(draft.type) ? "默认装货港" : "起运地"}>
                 <Input value={draft.origin} onChange={(event) => update("origin", event.target.value)} />
               </Field>
-              <Field label="目的地">
+              <Field label={isSpecialDocumentType(draft.type) ? "默认卸货港" : "目的地"}>
                 <Input value={draft.destination} onChange={(event) => update("destination", event.target.value)} />
               </Field>
-              {draft.type === "packing" && (
-                <Field label="唛头">
+              {(draft.type === "packing" || isSpecialDocumentType(draft.type)) && (
+                <Field label="默认唛头">
                   <Input value={draft.shippingMarks} onChange={(event) => update("shippingMarks", event.target.value)} placeholder="留空时预览使用示例唛头" />
                 </Field>
               )}
@@ -373,9 +378,9 @@ function TemplateDrawerForm({ template, onOpenChange, onSave }: { template: Docu
             <h3>默认显示规则</h3>
             <div className="toggle-list">
               {draft.type === "packing" && <TemplateToggle label="显示商品价格" description="开启后，装箱单显示单价、金额与合计" checked={draft.showPrices} onChange={(value) => update("showPrices", value)} />}
-              <TemplateToggle label="显示商品图片" description="预览使用演示商品图；正式单证使用实际商品图片" checked={draft.showImages} onChange={(value) => update("showImages", value)} />
+              {!isSpecialDocumentType(draft.type) && <TemplateToggle label="显示商品图片" description="预览使用演示商品图；正式单证使用实际商品图片" checked={draft.showImages} onChange={(value) => update("showImages", value)} />}
               <TemplateToggle label="显示印章图像" description="无公司印章时使用 DEMO 示例；不等同于法律电子签名" checked={draft.showStamp} onChange={(value) => update("showStamp", value)} />
-              <TemplateToggle label="显示银行信息" description="在纸张条款区显示当前公司银行资料" checked={draft.showBankInfo} onChange={(value) => update("showBankInfo", value)} />
+              {!isSpecialDocumentType(draft.type) && <TemplateToggle label="显示银行信息" description="在纸张条款区显示当前公司银行资料" checked={draft.showBankInfo} onChange={(value) => update("showBankInfo", value)} />}
             </div>
           </section>
           <div className="dialog-actions">
