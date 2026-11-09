@@ -318,7 +318,7 @@ export function paperText(language: LanguageCode) {
   return dictionaries[language] ?? en;
 }
 
-const titles: Record<DocumentType, Record<LanguageCode, string>> = {
+const titles: Record<Exclude<DocumentType, "ams" | "isf" | "vgm" | "si">, Record<LanguageCode, string>> = {
   quotation: {
     "zh-CN": "报价单",
     en: "QUOTATION",
@@ -386,5 +386,11 @@ const titles: Record<DocumentType, Record<LanguageCode, string>> = {
   },
 };
 export function documentTitle(type: DocumentType, language: LanguageCode) {
+  if (type === "ams" || type === "isf" || type === "vgm" || type === "si") {
+    if (language === "zh-CN") {
+      return { ams: "AMS 申报资料单", isf: "ISF 10+2 申报资料单", vgm: "VGM 集装箱核实总重", si: "SI 海运补料" }[type];
+    }
+    return { ams: "AMS FILING PREPARATION", isf: "ISF 10+2 PREPARATION", vgm: "VERIFIED GROSS MASS", si: "SHIPPING INSTRUCTION" }[type];
+  }
   return titles[type][language] ?? titles[type].en;
 }
