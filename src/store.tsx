@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createDefaultTemplates, getDocumentType, initialData, itemFromProduct } from "./data";
 import { QOSA_LOGO } from "./branding";
+import { createSpecialDocumentData, ensureSpecialDocumentData, isSpecialDocumentType } from "./export-forms";
 import type { AppData, Company, Customer, DocumentTemplate, DocumentType, LanguageCode, Product, TradeDocument } from "./types";
 
 const STORAGE_KEY = "yuanfan-document-studio-v1";
@@ -65,7 +66,9 @@ function normalizeData(value: Partial<AppData>): AppData {
         : structuredClone(initialData.company),
     customers: Array.isArray(value.customers) ? value.customers : structuredClone(initialData.customers),
     products: Array.isArray(value.products) ? value.products : structuredClone(initialData.products),
-    documents: Array.isArray(value.documents) ? value.documents : structuredClone(initialData.documents),
+    documents: Array.isArray(value.documents)
+      ? value.documents.map((doc) => ({ ...doc, ...ensureSpecialDocumentData(doc) }))
+      : structuredClone(initialData.documents),
     templates: createDefaultTemplates().map((fallback) => ({
       ...fallback,
       ...savedTemplates.find((template) => template.type === fallback.type),
@@ -183,11 +186,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           .map((id) => data.products.find((item) => item.id === id))
           .filter(Boolean)
           .map((product) => itemFromProduct(product!, 100));
+        const specialData = createSpecialDocumentData(input.type, data.company, customer);
+        if (specialData.shipping) {
+          specialData.shipping.portOfLoading = template.origin;
+          specialData.shipping.portOfDischarge = template.destination;
+        }
         const doc: TradeDocument = {
           id: `doc-${crypto.randomUUID()}`,
           type: input.type,
           number: input.number,
-          title: `${customer?.name ?? "未指定客户"} ${getDocumentType(input.type).name}`,
+          title: isSpecialDocumentType(input.type)
+            ? getDocumentType(input.type).name
+            : `${customer?.name ?? "未指定客户"} ${getDocumentType(input.type).name}`,
           issueDate: input.issueDate,
           status: "draft",
           language: input.language,
@@ -208,6 +218,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           showImages: template.showImages,
           showStamp: template.showStamp,
           showBankInfo: template.showBankInfo,
+          ...specialData,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };

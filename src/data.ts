@@ -1,5 +1,6 @@
 import type { AppData, Company, Customer, DocumentTemplate, DocumentType, LanguageCode, Product, TradeDocument } from "./types";
 import { QOSA_LOGO } from "./branding";
+import { isSpecialDocumentType } from "./export-forms";
 
 export const DOCUMENT_TYPES: {
   id: DocumentType;
@@ -48,6 +49,38 @@ export const DOCUMENT_TYPES: {
     short: "SC",
     description: "记录交易、交付、检验与合同条款",
     prefix: "SC",
+  },
+  {
+    id: "ams",
+    name: "AMS 申报资料单",
+    en: "AMS Filing Preparation",
+    short: "AMS",
+    description: "整理美国舱单申报所需的船运、货物与集装箱资料，不执行电子申报",
+    prefix: "AMS",
+  },
+  {
+    id: "isf",
+    name: "ISF 10+2 申报资料单",
+    en: "ISF 10+2 Preparation",
+    short: "ISF",
+    description: "整理进口安全申报相关方、货物与装箱资料，不生成申报回执",
+    prefix: "ISF",
+  },
+  {
+    id: "vgm",
+    name: "VGM 集装箱核实总重",
+    en: "Verified Gross Mass",
+    short: "VGM",
+    description: "按两种称重方法记录集装箱核实总重与授权签署资料",
+    prefix: "VGM",
+  },
+  {
+    id: "si",
+    name: "SI 海运补料",
+    en: "Shipping Instruction",
+    short: "SI",
+    description: "准备提单补料、船运港口、货物、集装箱与放单要求",
+    prefix: "SI",
   },
 ];
 
@@ -226,6 +259,8 @@ export function itemFromProduct(product: Product, quantity = 100): TradeDocument
     netWeight: Number((quantity * product.netWeight).toFixed(2)),
     grossWeight: Number((quantity * product.grossWeight).toFixed(2)),
     measurements: Number((Math.ceil(quantity / 24) * 0.064).toFixed(3)),
+    hsCode: product.hsCode,
+    originCountry: product.originCountry,
     image: product.image,
   };
 }
@@ -301,7 +336,7 @@ export function createDefaultTemplates(): DocumentTemplate[] {
     shippingMarks: "",
     contractTerms: EMPTY_DOCUMENT.contractTerms,
     notes: EMPTY_DOCUMENT.notes,
-    showPrices: item.id !== "packing",
+    showPrices: item.id !== "packing" && !isSpecialDocumentType(item.id),
     showImages: false,
     showStamp: true,
     showBankInfo: item.id === "proforma" || item.id === "contract",
