@@ -3,6 +3,8 @@ import { documentTotal, formatDate, formatMoney, formatNumber, getTheme } from "
 import { documentTitle, paperText } from "../i18n";
 import { paginateItems } from "../document-utils";
 import type { EditorSection, TradeDocument } from "../types";
+import { isSpecialDocumentType } from "../export-forms";
+import { SpecialPaperPreview } from "./SpecialPaperPreview";
 
 interface PaperPreviewProps {
   doc: TradeDocument;
@@ -12,6 +14,9 @@ interface PaperPreviewProps {
 }
 
 export const PaperPreview = forwardRef<HTMLDivElement, PaperPreviewProps>(function PaperPreview({ doc, zoom = 1, onSection, fullScreen = false }, ref) {
+  if (isSpecialDocumentType(doc.type)) {
+    return <SpecialPaperPreview ref={ref} doc={doc} zoom={zoom} onSection={onSection} fullScreen={fullScreen} />;
+  }
   const theme = getTheme(doc.themeId);
   const t = paperText(doc.language);
   const pages = paginateItems(doc);

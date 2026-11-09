@@ -8,6 +8,7 @@ import "./styles/04.css";
 import "./styles/05.css";
 import "./styles/06.css";
 import "./styles/07.css";
+import "./styles/08.css";
 import App from "./App.tsx";
 import { StoreProvider } from "./store.tsx";
 
