@@ -150,7 +150,7 @@ export default function App() {
             <span>2</span>
             <div>
               <strong>三步新建单证</strong>
-              <p>选择五类单据之一，带入客户与商品，再确认编号、语言和配色。</p>
+              <p>选择九类单据之一，按需带入客户、货物与船运资料，再确认编号、语言和配色。</p>
             </div>
           </li>
           <li>

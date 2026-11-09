@@ -219,10 +219,10 @@ export function EmptyState({ icon, title, description, action }: { icon?: ReactN
   );
 }
 
-export function StatusBadge({ status }: { status: "draft" | "completed" | "archived" }) {
+export function StatusBadge({ status, ready = false }: { status: "draft" | "completed" | "archived"; ready?: boolean }) {
   const map = {
     draft: ["草稿", "amber"],
-    completed: ["已完成", "green"],
+    completed: [ready ? "资料已备齐" : "已完成", "green"],
     archived: ["已归档", "neutral"],
   } as const;
   return <Badge tone={map[status][1]}>{map[status][0]}</Badge>;

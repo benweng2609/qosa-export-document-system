@@ -5,6 +5,7 @@ import { useStore } from "../store";
 import type { AppView, DocumentType, TradeDocument } from "../types";
 import { Badge, Button, EmptyState, Input, StatusBadge } from "../components/ui";
 import { QOSA_LOGO } from "../branding";
+import { isSpecialDocumentType } from "../export-forms";
 
 export default function Dashboard({ onNew, onOpen, onNavigate }: { onNew: (type?: DocumentType) => void; onOpen: (doc: TradeDocument) => void; onNavigate: (view: AppView) => void }) {
   const { data, storageError } = useStore();
@@ -152,9 +153,9 @@ export default function Dashboard({ onNew, onOpen, onNavigate }: { onNew: (type?
                     <Badge tone="blue">{getDocumentType(doc.type).name}</Badge>
                   </td>
                   <td>{doc.customerSnapshot?.name ?? "—"}</td>
-                  <td className="numeric">{doc.type === "packing" ? `${doc.items.reduce((s, i) => s + i.packageCount, 0)} 箱` : formatMoney(documentTotal(doc), doc.currency)}</td>
+                  <td className="numeric">{isSpecialDocumentType(doc.type) ? "—" : doc.type === "packing" ? `${doc.items.reduce((s, i) => s + i.packageCount, 0)} 箱` : formatMoney(documentTotal(doc), doc.currency)}</td>
                   <td>
-                    <StatusBadge status={doc.status} />
+                    <StatusBadge status={doc.status} ready={isSpecialDocumentType(doc.type)} />
                   </td>
                   <td className="align-right">
                     <Button size="sm" variant="ghost" onClick={() => onOpen(doc)}>
