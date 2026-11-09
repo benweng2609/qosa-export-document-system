@@ -1,4 +1,5 @@
 import { getDocumentType } from "./data";
+import { createSpecialDocumentData, isSpecialDocumentType } from "./export-forms";
 import type { Company, Customer, DocumentItem, DocumentTemplate, TradeDocument } from "./types";
 
 const productImage = `data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="12" fill="#EFF6FF"/><path d="M38 18h20v12H38z" fill="#64748B"/><path d="M34 30h28l4 48H30z" fill="#94A3B8"/><path d="M36 36h24" stroke="#F8FAFC" stroke-width="3"/></svg>')}`;
@@ -54,6 +55,11 @@ const previewItems: DocumentItem[] = [
 
 export function createTemplatePreviewDocument(template: DocumentTemplate, company: Company): TradeDocument {
   const timestamp = "2026-11-08T00:00:00.000Z";
+  const specialData = createSpecialDocumentData(template.type, company, previewCustomer, true);
+  if (specialData.shipping) {
+    specialData.shipping.portOfLoading = template.origin || specialData.shipping.portOfLoading;
+    specialData.shipping.portOfDischarge = template.destination || specialData.shipping.portOfDischarge;
+  }
   return {
     id: `template-preview-${template.type}`,
     type: template.type,
@@ -79,6 +85,10 @@ export function createTemplatePreviewDocument(template: DocumentTemplate, compan
     showImages: template.showImages,
     showStamp: template.showStamp,
     showBankInfo: template.showBankInfo,
+    ...specialData,
+    ...(isSpecialDocumentType(template.type)
+      ? { items: template.type === "vgm" ? [] : previewItems.map((item) => ({ ...item, image: undefined })) }
+      : {}),
     createdAt: timestamp,
     updatedAt: timestamp,
   };
