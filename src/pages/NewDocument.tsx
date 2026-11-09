@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Building2, Check, CheckCircle2, FileText, Packag
 import { useMemo, useState } from "react";
 import { DOCUMENT_TYPES, LANGUAGES, THEMES } from "../data";
 import { suggestNumber, useStore } from "../store";
+import { isSpecialDocumentType } from "../export-forms";
 import type { DocumentType, LanguageCode, TradeDocument } from "../types";
 import { Button, Field, Input, Select } from "../components/ui";
 
@@ -20,6 +21,7 @@ export default function NewDocument({ initialType = "quotation", onCancel, onCre
   const [productQuery, setProductQuery] = useState("");
   const [numberError, setNumberError] = useState("");
   const selectedCustomer = data.customers.find((item) => item.id === customerId);
+  const special = isSpecialDocumentType(type);
   const products = useMemo(() => data.products.filter((product) => `${product.name}${product.sku}`.toLowerCase().includes(productQuery.toLowerCase())), [data.products, productQuery]);
 
   const chooseType = (next: DocumentType) => {
@@ -58,7 +60,7 @@ export default function NewDocument({ initialType = "quotation", onCancel, onCre
       <div className="page-heading">
         <div>
           <h1>新建单证</h1>
-          <p>三步开始制单。客户或商品可暂时留空，进入编辑器后再补充。</p>
+          <p>三步开始制单。基础资料可暂时留空，进入编辑器后再补充。</p>
         </div>
       </div>
       <ol className="stepper" aria-label="新建单证步骤">
@@ -166,27 +168,29 @@ export default function NewDocument({ initialType = "quotation", onCancel, onCre
                   ))}
                 </div>
               </div>
-              <div>
-                <div className="subsection-heading">
-                  <Package size={18} />
-                  <h3>商品</h3>
-                  <span>已选 {productIds.length} 项</span>
+              {type !== "vgm" && (
+                <div>
+                  <div className="subsection-heading">
+                    <Package size={18} />
+                    <h3>{special ? "货物" : "商品"}</h3>
+                    <span>已选 {productIds.length} 项</span>
+                  </div>
+                  <Input value={productQuery} onChange={(e) => setProductQuery(e.target.value)} placeholder="搜索名称或 SKU" aria-label={`搜索可选${special ? "货物" : "商品"}`} />
+                  <div className="record-choice-list product-choice-list">
+                    {products.map((product) => (
+                      <button key={product.id} className={`record-choice ${productIds.includes(product.id) ? "selected" : ""}`} onClick={() => toggleProduct(product.id)} aria-pressed={productIds.includes(product.id)}>
+                        <div>
+                          <strong>{product.name}</strong>
+                          <span>
+                            {product.sku} · {special ? `HS ${product.hsCode || "待补充"}` : `${product.defaultUnitPrice.toFixed(2)} ${product.currency} / ${product.unit}`}
+                          </span>
+                        </div>
+                        <span className="checkbox-visual">{productIds.includes(product.id) && <Check size={14} />}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <Input value={productQuery} onChange={(e) => setProductQuery(e.target.value)} placeholder="搜索名称或 SKU" aria-label="搜索可选商品" />
-                <div className="record-choice-list product-choice-list">
-                  {products.map((product) => (
-                    <button key={product.id} className={`record-choice ${productIds.includes(product.id) ? "selected" : ""}`} onClick={() => toggleProduct(product.id)} aria-pressed={productIds.includes(product.id)}>
-                      <div>
-                        <strong>{product.name}</strong>
-                        <span>
-                          {product.sku} · {product.defaultUnitPrice.toFixed(2)} {product.currency} / {product.unit}
-                        </span>
-                      </div>
-                      <span className="checkbox-visual">{productIds.includes(product.id) && <Check size={14} />}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
           </section>
         )}
@@ -196,7 +200,8 @@ export default function NewDocument({ initialType = "quotation", onCancel, onCre
             <div className="wizard-title">
               <h2>填写初始信息</h2>
               <p>
-                {DOCUMENT_TYPES.find((t) => t.id === type)?.name} · {selectedCustomer?.name ?? "暂未选择客户"} · {productIds.length} 项商品
+                {DOCUMENT_TYPES.find((t) => t.id === type)?.name} · {selectedCustomer?.name ?? "暂未选择客户"}
+                {type !== "vgm" && ` · ${productIds.length} 项${special ? "货物" : "商品"}`}
               </p>
             </div>
             <div className="initial-form">
@@ -213,14 +218,16 @@ export default function NewDocument({ initialType = "quotation", onCancel, onCre
                 <Field label="签发日期" required>
                   <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required />
                 </Field>
-                <Field label="币种">
-                  <Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                    <option value="USD">USD — 美元</option>
-                    <option value="EUR">EUR — 欧元</option>
-                    <option value="CNY">CNY — 人民币</option>
-                    <option value="GBP">GBP — 英镑</option>
-                  </Select>
-                </Field>
+                {!isSpecialDocumentType(type) && (
+                  <Field label="币种">
+                    <Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                      <option value="USD">USD — 美元</option>
+                      <option value="EUR">EUR — 欧元</option>
+                      <option value="CNY">CNY — 人民币</option>
+                      <option value="GBP">GBP — 英镑</option>
+                    </Select>
+                  </Field>
+                )}
                 <Field label="单据语言">
                   <Select value={language} onChange={(e) => setLanguage(e.target.value as LanguageCode)}>
                     {LANGUAGES.map((item) => (
@@ -258,10 +265,13 @@ export default function NewDocument({ initialType = "quotation", onCancel, onCre
               <div className="creation-summary">
                 <FileText size={20} />
                 <p>
-                  当前使用“
-                  {data.templates.find((template) => template.type === type)?.name}
-                  ”，默认条款与显示规则将一并带入。商品默认数量为 100 {data.products.find((p) => productIds.includes(p.id))?.unit ?? "pcs"}
-                  ，可直接修改；未选择的资料也可稍后补充。
+                  当前使用“{data.templates.find((template) => template.type === type)?.name}”。
+                  {special
+                    ? type === "vgm"
+                      ? "默认船运信息与显示规则将一并带入；箱号、称重方式和签署信息可在编辑器中填写。"
+                      : "默认港口、唛头与显示规则将一并带入；所选货物的件数、重量和申报要素可在编辑器中修改。"
+                    : `默认条款与显示规则将一并带入。商品默认数量为 100 ${data.products.find((p) => productIds.includes(p.id))?.unit ?? "pcs"}，可直接修改。`}
+                  未选择的资料也可稍后补充。
                 </p>
               </div>
             </div>

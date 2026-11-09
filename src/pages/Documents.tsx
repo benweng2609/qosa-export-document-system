@@ -7,6 +7,7 @@ import { useStore } from "../store";
 import type { TradeDocument } from "../types";
 import { Button, ConfirmDialog, EmptyState, Field, Input, Modal, Select, StatusBadge } from "../components/ui";
 import { usePdfDownload } from "../hooks/use-pdf-download";
+import { isSpecialDocumentType } from "../export-forms";
 
 export default function Documents({ onNew, onOpen }: { onNew: () => void; onOpen: (doc: TradeDocument) => void }) {
   const { data, duplicateDocument, archiveDocument, deleteDocument, updateDocument } = useStore();
@@ -121,7 +122,7 @@ export default function Documents({ onNew, onOpen }: { onNew: () => void; onOpen
         <Select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="按状态筛选">
           <option value="all">全部状态</option>
           <option value="draft">草稿</option>
-          <option value="completed">已完成</option>
+          <option value="completed">已完成 / 资料已备齐</option>
           <option value="archived">已归档</option>
         </Select>
         <Select value={customer} onChange={(e) => setCustomer(e.target.value)} aria-label="按客户筛选">
@@ -170,10 +171,10 @@ export default function Documents({ onNew, onOpen }: { onNew: () => void; onOpen
                 <td>{getDocumentType(doc.type).name}</td>
                 <td>{doc.customerSnapshot?.name ?? "—"}</td>
                 <td>{getLanguage(doc.language).native}</td>
-                <td className="numeric">{doc.type === "packing" ? `${doc.items.reduce((s, i) => s + i.packageCount, 0)} 箱` : formatMoney(documentTotal(doc), doc.currency)}</td>
+                <td className="numeric">{isSpecialDocumentType(doc.type) ? "—" : doc.type === "packing" ? `${doc.items.reduce((s, i) => s + i.packageCount, 0)} 箱` : formatMoney(documentTotal(doc), doc.currency)}</td>
                 <td>{new Date(doc.updatedAt).toLocaleDateString("zh-CN")}</td>
                 <td>
-                  <StatusBadge status={doc.status} />
+                  <StatusBadge status={doc.status} ready={isSpecialDocumentType(doc.type)} />
                 </td>
                 <td>{actions(doc)}</td>
               </tr>
@@ -186,13 +187,13 @@ export default function Documents({ onNew, onOpen }: { onNew: () => void; onOpen
           <article className="mobile-document-card" key={doc.id}>
             <div className="mobile-doc-top">
               <button onClick={() => onOpen(doc)}>{doc.number}</button>
-              <StatusBadge status={doc.status} />
+              <StatusBadge status={doc.status} ready={isSpecialDocumentType(doc.type)} />
             </div>
             <p>
               {doc.customerSnapshot?.name ?? "未指定客户"} · {getDocumentType(doc.type).name}
             </p>
             <div className="mobile-doc-meta">
-              <strong>{doc.type === "packing" ? `${doc.items.reduce((s, i) => s + i.packageCount, 0)} 箱` : formatMoney(documentTotal(doc), doc.currency)}</strong>
+              <strong>{isSpecialDocumentType(doc.type) ? "专用资料单" : doc.type === "packing" ? `${doc.items.reduce((s, i) => s + i.packageCount, 0)} 箱` : formatMoney(documentTotal(doc), doc.currency)}</strong>
               <span>
                 {getLanguage(doc.language).native} · {new Date(doc.updatedAt).toLocaleDateString("zh-CN")}
               </span>
