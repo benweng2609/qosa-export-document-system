@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLeft, ArrowUp, Check, CheckCircle2, Copy, Download, Expand, FileText, Info, Languages, LoaderCircle, Minus, PackagePlus, Palette, Plus, Redo2, Save, Trash2, Truck, UserRound } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Check, CheckCircle2, Copy, Download, Expand, FileCheck2, FileText, Info, Languages, LoaderCircle, Minus, PackagePlus, Palette, PenLine, Plus, Redo2, Save, Ship, Trash2, Truck, UserRound } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DOCUMENT_TYPES, LANGUAGES, THEMES, documentTotal, formatMoney, getDocumentType } from "../data";
@@ -7,14 +7,30 @@ import type { DocumentItem, DocumentType, EditorSection, LanguageCode, TradeDocu
 import { Badge, Button, Field, IconButton, ImageUpload, Input, Modal, Select, Textarea } from "../components/ui";
 import { PaperPreview } from "../components/PaperPreview";
 import { usePdfDownload } from "../hooks/use-pdf-download";
+import { ensureSpecialDocumentData, getContainerVgmKg, isSpecialDocumentType } from "../export-forms";
+import { ContainersSection, DeclarationSection, ShipmentSection, SpecialPartiesSection, VgmSignatureSection } from "./SpecialSections";
 
-const sections: { id: EditorSection; label: string; icon: typeof FileText }[] = [
+const tradeSections: { id: EditorSection; label: string; icon: typeof FileText }[] = [
   { id: "basic", label: "基础信息", icon: FileText },
   { id: "parties", label: "公司与客户", icon: UserRound },
   { id: "items", label: "商品明细", icon: PackagePlus },
   { id: "terms", label: "贸易与运输条款", icon: Truck },
   { id: "layout", label: "版式、语言与印章", icon: Palette },
 ];
+
+function getSections(type: DocumentType): { id: EditorSection; label: string; icon: typeof FileText }[] {
+  if (!isSpecialDocumentType(type)) return tradeSections;
+  return [
+    { id: "basic", label: "基础信息", icon: FileText },
+    { id: "parties", label: type === "isf" ? "ISF 相关方" : "运输相关方", icon: UserRound },
+    { id: "shipping", label: "船运与港口", icon: Ship },
+    ...(type !== "vgm" ? [{ id: "declaration" as const, label: type === "si" ? "提单与放单" : "申报要素", icon: FileCheck2 }] : []),
+    ...(type !== "vgm" ? [{ id: "items" as const, label: "货物明细", icon: PackagePlus }] : []),
+    { id: "containers", label: type === "vgm" ? "集装箱与总重" : "集装箱资料", icon: Boxes },
+    ...(type === "vgm" ? [{ id: "signature" as const, label: "称重与签署", icon: PenLine }] : []),
+    { id: "layout", label: "版式、语言与印章", icon: Palette },
+  ];
+}
 
 export default function Editor({ docId, onBack }: { docId: string; onBack: () => void }) {
   const { data, updateDocument, storageError } = useStore();
@@ -103,19 +119,41 @@ export default function Editor({ docId, onBack }: { docId: string; onBack: () =>
     change((prev) => ({
       ...prev,
       type: typeTarget,
-      showPrices: typeTarget === "packing" ? false : true,
+      ...ensureSpecialDocumentData(prev, typeTarget),
+      showPrices: typeTarget === "packing" || isSpecialDocumentType(typeTarget) ? false : true,
       showBankInfo: typeTarget === "proforma" || typeTarget === "contract",
     }));
     toast.success(`已切换为${getDocumentType(typeTarget).name}，公司、客户和 ${draft.items.length} 项商品已保留。`);
+    setActive("basic");
     setTypeTarget(null);
   };
   const missingCount = (section: EditorSection) => {
     if (section === "basic") return [draft.number, draft.issueDate].filter((value) => !value).length;
+    if (isSpecialDocumentType(draft.type)) {
+      if (section === "parties") {
+        const parties = draft.shippingParties;
+        const baseMissing = [parties?.shipper.name, draft.type === "vgm" ? "ok" : parties?.consignee.name].filter((value) => !value).length;
+        const isfMissing = draft.type === "isf"
+          ? [draft.isf?.seller.name, draft.isf?.buyer.name, draft.isf?.manufacturer.name, draft.isf?.shipToParty.name, draft.isf?.stuffingLocation.address].filter((value) => !value).length
+          : 0;
+        return baseMissing + isfMissing;
+      }
+      if (section === "shipping") return [draft.shipping?.vesselName, draft.shipping?.voyageNumber, draft.shipping?.portOfLoading, draft.shipping?.portOfDischarge].filter((value) => !value).length;
+      if (section === "declaration" && draft.type === "isf") return [draft.isf?.importerOfRecordNumber, draft.isf?.consigneeNumber].filter((value) => !value).length;
+      if (section === "items") return draft.items.length ? 0 : 1;
+      if (section === "containers") {
+        if (!(draft.containers ?? []).length) return 1;
+        return (draft.containers ?? []).filter((container) => !container.containerNumber || (draft.type === "vgm" && getContainerVgmKg(container) <= 0)).length;
+      }
+      if (section === "signature") return [draft.vgm?.weighingDate, draft.vgm?.authorizedPerson, draft.vgm?.signatureDate].filter((value) => !value).length;
+      return 0;
+    }
     if (section === "parties") return draft.customerSnapshot ? 0 : 1;
     if (section === "items") return draft.items.length ? 0 : 1;
     if (section === "terms") return ["proforma", "commercial", "packing", "contract"].includes(draft.type) && (!draft.origin || !draft.destination) ? 1 : 0;
     return 0;
   };
+  const sections = getSections(draft.type);
 
   return (
     <div className="editor-shell">
@@ -237,9 +275,13 @@ export default function Editor({ docId, onBack }: { docId: string; onBack: () =>
             </button>
           </div>
           {active === "basic" && <BasicSection draft={draft} update={update} />}
-          {active === "parties" && <PartiesSection draft={draft} update={update} />}
+          {active === "parties" && (isSpecialDocumentType(draft.type) ? <SpecialPartiesSection draft={draft} change={change} /> : <PartiesSection draft={draft} update={update} />)}
+          {active === "shipping" && <ShipmentSection draft={draft} change={change} />}
+          {active === "declaration" && <DeclarationSection draft={draft} change={change} />}
           {active === "items" && <ItemsSection draft={draft} change={change} selectedProductId={selectedProductId} setSelectedProductId={setSelectedProductId} undo={undo} />}
           {active === "terms" && <TermsSection draft={draft} update={update} />}
+          {active === "containers" && <ContainersSection draft={draft} change={change} />}
+          {active === "signature" && <VgmSignatureSection draft={draft} change={change} />}
           {active === "layout" && <LayoutSection draft={draft} update={update} change={change} />}
         </main>
         <section className="preview-panel" aria-label="A4 实时预览">
@@ -322,18 +364,20 @@ function BasicSection({ draft, update }: { draft: TradeDocument; update: UpdateD
         <Field label="状态">
           <Select value={draft.status} onChange={(e) => update("status", e.target.value as TradeDocument["status"])}>
             <option value="draft">草稿</option>
-            <option value="completed">已完成</option>
+            <option value="completed">{isSpecialDocumentType(draft.type) ? "资料已备齐" : "已完成"}</option>
             <option value="archived">已归档</option>
           </Select>
         </Field>
-        <Field label="币种">
-          <Select value={draft.currency} onChange={(e) => update("currency", e.target.value)}>
-            <option>USD</option>
-            <option>EUR</option>
-            <option>CNY</option>
-            <option>GBP</option>
-          </Select>
-        </Field>
+        {!isSpecialDocumentType(draft.type) && (
+          <Field label="币种">
+            <Select value={draft.currency} onChange={(e) => update("currency", e.target.value)}>
+              <option>USD</option>
+              <option>EUR</option>
+              <option>CNY</option>
+              <option>GBP</option>
+            </Select>
+          </Field>
+        )}
         {draft.type === "quotation" && (
           <Field label="报价有效期" required>
             <Input type="date" value={draft.validUntil} onChange={(e) => update("validUntil", e.target.value)} />
@@ -342,7 +386,7 @@ function BasicSection({ draft, update }: { draft: TradeDocument; update: UpdateD
       </div>
       <div className="form-note">
         <Info size={16} />
-        <p>金额由商品数量与单价计算，不需要在这里重复填写。</p>
+        <p>{isSpecialDocumentType(draft.type) ? "“资料已备齐”只表示本地资料整理状态，不表示已向海关、承运人或其他机构提交。" : "金额由商品数量与单价计算，不需要在这里重复填写。"}</p>
       </div>
     </section>
   );
@@ -501,9 +545,13 @@ function LayoutSection({ draft, update, change }: { draft: TradeDocument; update
         </div>
       </Field>
       <div className="toggle-list">
-        {draft.type === "packing" && <Toggle label="显示商品价格" description={draft.type === "packing" ? "装箱单默认隐藏，开启后会显示单价与总金额。" : "在商品表中显示单价、金额与合计。"} checked={draft.showPrices} onChange={(value) => update("showPrices", value)} />}
-        <Toggle label="显示商品图片" description="仅显示已上传图片的商品。" checked={draft.showImages} onChange={(value) => update("showImages", value)} />
-        <Toggle label="显示银行信息" description="在纸张条款区显示当前公司银行快照。" checked={draft.showBankInfo} onChange={(value) => update("showBankInfo", value)} />
+        {!isSpecialDocumentType(draft.type) && (
+          <>
+            {draft.type === "packing" && <Toggle label="显示商品价格" description="装箱单默认隐藏，开启后会显示单价与总金额。" checked={draft.showPrices} onChange={(value) => update("showPrices", value)} />}
+            <Toggle label="显示商品图片" description="仅显示已上传图片的商品。" checked={draft.showImages} onChange={(value) => update("showImages", value)} />
+            <Toggle label="显示银行信息" description="在纸张条款区显示当前公司银行快照。" checked={draft.showBankInfo} onChange={(value) => update("showBankInfo", value)} />
+          </>
+        )}
         <Toggle label="显示电子印章" description="印章仅用于单证图像，不等同于法律电子签名。" checked={draft.showStamp} onChange={(value) => update("showStamp", value)} />
       </div>
       <Field label="公司 LOGO">
@@ -586,6 +634,8 @@ function ItemsSection({ draft, change, selectedProductId, setSelectedProductId, 
       netWeight: Number((100 * product.netWeight).toFixed(2)),
       grossWeight: Number((100 * product.grossWeight).toFixed(2)),
       measurements: 0.32,
+      hsCode: product.hsCode,
+      originCountry: product.originCountry,
       image: product.image,
     };
     change((prev) => ({ ...prev, items: [...prev.items, item] }));
@@ -638,7 +688,7 @@ function ItemsSection({ draft, change, selectedProductId, setSelectedProductId, 
 
   return (
     <section className="editor-section items-section">
-      <SectionHeading title="商品明细" description="修改数量或单价后，金额、合计和 A4 预览立即更新。" />
+      <SectionHeading title={isSpecialDocumentType(draft.type) ? "货物明细" : "商品明细"} description={isSpecialDocumentType(draft.type) ? "描述、件数、重量、税则号和原产国会同步到专用 A4 资料单。" : "修改数量或单价后，金额、合计和 A4 预览立即更新。"} />
       <div className="add-product-row">
         <Select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)} aria-label="从产品库选择">
           <option value="">从产品库选择…</option>
@@ -693,9 +743,9 @@ function ItemsSection({ draft, change, selectedProductId, setSelectedProductId, 
                   <Input type="number" min="0" step="0.01" value={item.unitPrice} onChange={(e) => updateItem(item.id, "unitPrice", e.target.value)} />
                 </Field>
               )}
-              {draft.type === "packing" && (
+              {(draft.type === "packing" || isSpecialDocumentType(draft.type)) && (
                 <>
-                  <Field label="箱数">
+                  <Field label="件数 / 箱数">
                     <Input type="number" min="0" step="1" value={item.packageCount} onChange={(e) => updateItem(item.id, "packageCount", e.target.value)} />
                   </Field>
                   <Field label="净重（kg）">
@@ -707,6 +757,16 @@ function ItemsSection({ draft, change, selectedProductId, setSelectedProductId, 
                   <Field label="体积（m³）">
                     <Input type="number" min="0" step="0.001" value={item.measurements} onChange={(e) => updateItem(item.id, "measurements", e.target.value)} />
                   </Field>
+                  {isSpecialDocumentType(draft.type) && (
+                    <>
+                      <Field label="HS / HTSUS Code">
+                        <Input value={item.hsCode ?? ""} onChange={(e) => updateItem(item.id, "hsCode", e.target.value)} />
+                      </Field>
+                      <Field label="原产国">
+                        <Input value={item.originCountry ?? ""} onChange={(e) => updateItem(item.id, "originCountry", e.target.value)} placeholder="例如：CN" />
+                      </Field>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -727,10 +787,10 @@ function ItemsSection({ draft, change, selectedProductId, setSelectedProductId, 
       )}
       <div className="editor-total">
         <span>
-          {draft.type === "packing" ? "总箱数 / 总毛重" : "合计"}
-          <small>{draft.items.length} 项商品</small>
+          {draft.type === "packing" || isSpecialDocumentType(draft.type) ? "总件数 / 总毛重" : "合计"}
+          <small>{draft.items.length} 项货物</small>
         </span>
-        <strong>{draft.type === "packing" ? `${draft.items.reduce((s, i) => s + i.packageCount, 0)} 箱 · ${draft.items.reduce((s, i) => s + i.grossWeight, 0).toFixed(2)} kg` : formatMoney(documentTotal(draft), draft.currency)}</strong>
+        <strong>{draft.type === "packing" || isSpecialDocumentType(draft.type) ? `${draft.items.reduce((s, i) => s + i.packageCount, 0)} 件 · ${draft.items.reduce((s, i) => s + i.grossWeight, 0).toFixed(2)} kg` : formatMoney(documentTotal(draft), draft.currency)}</strong>
       </div>
     </section>
   );
