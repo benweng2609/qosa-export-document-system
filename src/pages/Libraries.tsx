@@ -34,7 +34,7 @@ export function ProductsPage() {
       <div className="page-heading">
         <div>
           <h1>产品库</h1>
-          <p>维护一次商品资料，新建五类单证时直接复用。</p>
+          <p>维护一次商品资料，新建贸易单证或船运资料单时直接复用。</p>
         </div>
         <div className="page-heading-actions">
           <Button onClick={() => setImportOpen(true)}>
