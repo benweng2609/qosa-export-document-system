@@ -5,6 +5,8 @@ import { documentTotal, formatDate, formatMoney, formatNumber, getTheme } from "
 import { documentTitle, paperText } from "../i18n";
 import { paginateItems } from "../document-utils";
 import type { TradeDocument } from "../types";
+import { isSpecialDocumentType } from "../export-forms";
+import { SpecialPdfDocument } from "./SpecialPdf";
 import docLatinRegular from "@fontsource/noto-sans/files/noto-sans-latin-400-normal.woff2?url";
 import docLatinBold from "@fontsource/noto-sans/files/noto-sans-latin-700-normal.woff2?url";
 import docCjkRegular from "@fontpkg/noto-sans-cjk-sc/NotoSansCJKsc-Regular.otf?url";
@@ -145,6 +147,7 @@ const styles = StyleSheet.create({
 });
 
 function TradePdfDocument({ doc }: { doc: TradeDocument }) {
+  if (isSpecialDocumentType(doc.type)) return <SpecialPdfDocument doc={doc} />;
   const theme = getTheme(doc.themeId);
   const t = paperText(doc.language);
   const pages = paginateItems(doc);
